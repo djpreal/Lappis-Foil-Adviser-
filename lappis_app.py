@@ -1,28 +1,55 @@
 import streamlit as st
 
-# Sivun asetukset ja selaimen välilehden nimi
+# Sivun asetukset
 st.set_page_config(page_title="Lappis Foil Advaiser", page_icon="🏄‍♂️", layout="centered")
 
-# --- TYYLITTELY ---
+# --- TYYLITTELY (Valkoinen teksti ja selkeys) ---
 st.markdown("""
     <style>
+    /* Tausta mustaksi */
     .stApp { background-color: #050508; }
-    .main-header { color: #38bdf8; font-size: 36px; font-weight: bold; text-align: center; margin-bottom: 5px; }
-    .sub-header { color: #94a3b8; font-size: 14px; text-align: center; margin-bottom: 30px; }
-    .expert-card { background-color: #1e293b; padding: 20px; border-radius: 15px; border-left: 5px solid #38bdf8; margin-top: 20px; }
-    .result-text { font-family: 'Courier New', Courier, monospace; color: #f8fafc; font-size: 16px; line-height: 1.6; }
+    
+    /* Otsikot valkoiseksi/syaaniksi */
+    h1, h2, h3, p, span, label { color: #ffffff !important; }
+    
+    /* Pääotsikko */
+    .main-header { color: #38bdf8; font-size: 42px; font-weight: bold; text-align: center; margin-bottom: 5px; }
+    
+    /* Tulokset selkeään valkoiseen laatikkoon */
+    .result-box { 
+        background-color: #1e293b; 
+        padding: 25px; 
+        border-radius: 15px; 
+        border: 2px solid #38bdf8;
+        color: #ffffff !important;
+        font-size: 18px;
+        line-height: 1.6;
+    }
+    
+    /* Expert Card */
+    .expert-card { 
+        background-color: #0f172a; 
+        padding: 20px; 
+        border-radius: 15px; 
+        border-left: 10px solid #38bdf8; 
+        margin-top: 20px;
+        color: #ffffff !important;
+    }
+
+    /* Input-kenttien tekstin väri */
+    .stNumberInput input, .stSelectbox div { color: white !important; }
     </style>
     """, unsafe_allow_html=True)
 
 st.markdown('<div class="main-header">Lappis Foil Advaiser</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-header">Asiantuntijan työkalu oikean kaluston valintaan</div>', unsafe_allow_html=True)
+st.write("<p style='text-align: center;'>Tiedot päivittyvät automaattisesti syötteen mukaan.</p>", unsafe_allow_html=True)
 
 # --- SYÖTTEET ---
 col1, col2 = st.columns(2)
 
 with col1:
-    laji = st.selectbox("Laji", ["Wingfoil", "Pumpfoil", "eFoil", "SUPfoil"])
-    taso = st.select_slider("Taso", options=["Aloittelija", "Keskitaso", "Pro"])
+    laji = st.selectbox("Valitse Laji", ["Wingfoil", "Pumpfoil", "eFoil", "SUPfoil"])
+    taso = st.select_slider("Taitotaso", options=["Aloittelija", "Keskitaso", "Pro"])
 
 with col2:
     paino = st.number_input("Paino (kg)", 30, 150, 85)
@@ -30,69 +57,55 @@ with col2:
 
 st.divider()
 
-# --- ANALYYSI JA LOGIIKKA ---
-# Tilavuuslaskenta
+# --- LOGIIKKA ---
 volyymi = int(paino + (40 if taso == "Aloittelija" else 5 if taso == "Keskitaso" else -15))
 if volyymi < 20: volyymi = 20 
 
-# Mastolaskenta
 masto = 82 if pituus > 180 or taso != "Aloittelija" else 75
 if taso == "Pro": masto = 93
 
-# Varuste- ja infologiikka
 if laji == "Pumpfoil":
-    siivet = "• Sabfoil LEVIATHAN 1550 (Paras liito)\n• Sabfoil LEVIATHAN 1350 (All-round)\n• Duotone Aero Glide 1595"
-    insight = f"Pumppauksessa pituutesi ({pituus}cm) on etu vipuvarren kannalta. Mitä suurempi siiven kärkiväli (High Aspect), sitä vähemmän työtä joudut tekemään lennon ylläpitämiseksi."
+    siivet = "• Sabfoil LEVIATHAN 1550 (Paras liito)<br>• Sabfoil LEVIATHAN 1350 (All-round)<br>• Duotone Aero Glide 1595"
+    insight = "Pumppauksessa pituutesi on etu vipuvarren kannalta. Mitä suurempi siiven kärkiväli (High Aspect), sitä helpompi lento on ylläpitää."
     profiili = "High Aspect (Kapea & Pitkä)"
 elif laji == "eFoil":
-    siivet = f"• Aero Lift 2400 (Vakaa nousu {paino}kg kuskille)\n• Sähköjärjestelmä: 5kW Brushless / 2.8kWh akku"
-    insight = "eFoilissa painopisteen hallinta on tärkeämpää kuin voima. Aloita 'Eco'-asetuksella, kunnes hallitset nousun."
+    siivet = "• Aero Lift 2400 (Vakaa nousu)<br>• 5kW Brushless Moottori<br>• 2.8kWh Tehoakku"
+    insight = "eFoilissa vakaus on tärkeintä. Aero Lift nousee hitaassa vauhdissa, mikä tekee oppimisesta turvallista."
     profiili = "Low Aspect (Paksu & Nostava)"
-else: # Wingfoil / SUP
+else:
     if taso == "Aloittelija":
-        siivet = "• Sabfoil TORTUGA 1250 / 1100\n• Duotone Aero Lift 2400"
-        insight = "Aloittelijana tarvitset pituussuuntaista vakautta. Tortuga-sarja antaa anteeksi virheitä sijoittumisessa."
-        profiili = "Low Aspect (Vakaa & Hidas)"
+        siivet = "• Sabfoil TORTUGA 1250 / 1100<br>• Duotone Aero Lift 2400"
+        insight = "Aloittelijana tarvitset pituussuuntaista vakautta (Pitch stability). Tortuga antaa anteeksi virheitä sijoittumisessa."
+        profiili = "Low Aspect (Vakaa)"
     else:
-        siivet = "• Sabfoil MEDUSA PRO 869 (Vauhti)\n• Sabfoil RAZOR 880 (Aaltosurffi)\n• Duotone Aero Carve 2.0"
-        insight = f"Painosi ({paino}kg) huomioiden Medusa Pro tarjoaa parhaan vasteen hypyissä ja tiukoissa käännöksissä."
-        profiili = "Medium/High Aspect (Nopea)"
+        siivet = "• Sabfoil MEDUSA PRO 869 (Vauhti)<br>• Sabfoil RAZOR 880 (Surffi)<br>• Duotone Aero Carve 2.0"
+        insight = f"Painollesi ({paino}kg) Medusa Pro tarjoaa parhaan vasteen kovemmassa vauhdissa ja hypyissä."
+        profiili = "Medium/High Aspect"
 
 # --- TULOSTUS ---
-st.subheader("🎯 Suositeltu kokoonpano")
+st.subheader("🎯 Analyysin tulos")
 
-res_col, viz_col = st.columns([2, 1])
-
-with res_col:
-    st.markdown(f"""
-    <div class="result-text">
-    <strong>ETUSIIVET:</strong><br>{siivet}<br><br>
-    <strong>LAUTA:</strong> {volyymi} Litraa<br>
-    <strong>MASTO:</strong> {masto} cm Carbon<br>
-    <strong>PROFIILI:</strong> {profiili}
-    </div>
-    """, unsafe_allow_html=True)
-
-with viz_col:
-    st.write("Siiven muoto:")
-    if "High" in profiili:
-        st.caption("Kapea / Liitävä")
-        st.progress(0.9)
-    elif "Low" in profiili:
-        st.caption("Leveä / Vakaa")
-        st.progress(0.3)
-    else:
-        st.caption("Hybrid / All-round")
-        st.progress(0.6)
-
+# Tuloslaatikko valkoisella tekstillä
 st.markdown(f"""
-<div class="expert-card">
-    <strong>LAPPIS EXPERT INSIGHT:</strong><br>
-    {insight}<br><br>
-    <em>Analyysi generoitu Lappis Foil Advaiserilla.</em>
+<div class="result-box">
+    <strong>SUOSITELTU ETUSIIPI:</strong><br>{siivet}<br><br>
+    <strong>LAUDAN TILAVUUS:</strong> {volyymi} Litraa<br>
+    <strong>MASTON PITUUS:</strong> {masto} cm Carbon<br>
+    <strong>SIIVEN PROFIILI:</strong> {profiili}
 </div>
 """, unsafe_allow_html=True)
 
-# LATAUSNAPPULA
-raportti = f"LAPPIS FOIL ADVAISER - RAPORTTI\n---------------------------\nLaji: {laji}\nTaso: {taso}\nKuski: {paino}kg / {pituus}cm\n\nSUOSITUS:\n{siivet}\nLauta: {volyymi}L\nMasto: {masto}cm"
-st.download_button("Tallenna analyysi (.txt)", raportti, file_name="lappis_analyysi.txt")
+
+
+st.markdown(f"""
+<div class="expert-card">
+    <strong style="color:#38bdf8;">LAPPIS EXPERT INSIGHT:</strong><br>
+    <p style="color:white; margin-top:10px;">{insight}</p>
+    <hr style="border:0.1px solid #1e293b;">
+    <em style="color:#94a3b8;">Analysoitu profiilille: {paino}kg / {pituus}cm</em>
+</div>
+""", unsafe_allow_html=True)
+
+# Tallenna nappi
+raportti = f"LAPPIS FOIL ADVAISER\nLaji: {laji}\nPaino: {paino}kg\nLauta: {volyymi}L\nMasto: {masto}cm\nSiivet: {siivet.replace('<br>', ', ')}"
+st.download_button("📥 Tallenna suositus asiakkaalle", raportti, file_name=f"lappis_suositus_{paino}kg.txt")
