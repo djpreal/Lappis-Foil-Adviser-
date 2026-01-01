@@ -44,60 +44,73 @@ with col2:
 
 st.divider()
 
-# --- KORJATTU LOGIIKKA ---
+# --- TÄYSIN ERIYTETTY LOGIIKKA PUMPFOILILLE ---
 
-# 1. Lautavolyymi (Laji-kohtainen korjaus)
 if laji == "Pumpfoil":
-    # Pumpfoil-laudat ovat aina pieniä (15-35L)
-    if taso == "Aloittelija": volyymi = 30
-    elif taso == "Keskitaso": volyymi = 20
-    else: volyymi = 15
+    # Pumpfoil-lautasuositukset (Sky Surf / Sky Style)
+    if taso == "Aloittelija":
+        lauta_malli = "Duotone Sky Style (tai Sky Free)"
+        volyymi = 35
+        masto = 73
+        siivet = "• Sabfoil LEVIATHAN 1550<br>• Duotone Aero Glide 1595"
+    elif taso == "Keskitaso":
+        lauta_malli = "Duotone Sky Surf"
+        volyymi = 25
+        masto = 73
+        siivet = "• Sabfoil LEVIATHAN 1350<br>• Sabfoil SIREN 1350"
+    else: # Pro
+        lauta_malli = "Duotone Sky Surf (Carbon)"
+        volyymi = 15
+        masto = 73
+        siivet = "• Sabfoil LEVIATHAN 1150<br>• Sabfoil BLADE 82"
+    
+    insight = f"Pumpfoilissa käytetään pieniä lautoja ({volyymi}L). Sky Surf on suunniteltu minimoimaan heiluripaino, jotta pumppaaminen on tehokasta."
+    profiili = "Ultra-High Aspect (Pumppaukseen)"
+    wing_info = "" # Ei wingiä pumppauksessa
+
 elif laji == "eFoil":
-    volyymi = int(paino + 20) if taso == "Aloittelija" else int(paino - 10)
-else: # Wingfoil ja SUP
-    volyymi = int(paino + (40 if taso == "Aloittelija" else 5 if taso == "Keskitaso" else -15))
-
-if volyymi < 15: volyymi = 15 
-
-# 2. Maston pituus
-masto = 82 if pituus > 180 or taso != "Aloittelija" else 75
-if laji == "Pumpfoil": masto = 73 # Sabfoil Kraken standardi pumpulle
-if taso == "Pro": masto = 93
-
-# 3. Varusteet ja Wingin koko
-wing_koko = ""
-if laji == "Wingfoil":
-    if paino < 65: wing_koko = "4.0m - 4.5m"
-    elif paino < 85: wing_koko = "5.0m"
-    else: wing_koko = "5.5m - 6.5m"
-
-# Lajikohtaiset tekstit
-if laji == "Pumpfoil":
-    siivet = "• Sabfoil LEVIATHAN 1550 (Paras nosto)<br>• Sabfoil LEVIATHAN 1350 (Vauhti/Glide)<br>• Sabfoil SIREN 1350"
-    insight = "Pumpfoilissa lauta on vain 'alusta' josta ponnistetaan. 15-30L on optimaalinen, jotta lauta on mahdollisimman kevyt heiluri-ilmiön minimoimiseksi."
-    profiili = "Ultra-High Aspect"
-elif laji == "eFoil":
-    siivet = "• Aero Lift 2400 (Vakaus)<br>• Integroitu moottorimasto"
-    insight = "eFoilissa volyymi auttaa vakaudessa vedessä ollessa. Lennon aikana siipi hoitaa kaiken."
+    lauta_malli = "Audi e-tron Foil (L-koko)" if taso == "Aloittelija" else "Audi e-tron Foil (Performance)"
+    volyymi = int(paino + 20)
+    masto = 80
+    siivet = "• Aero Lift 2400"
+    insight = "eFoilissa moottori hoitaa noston, lauta antaa vakauden startissa."
     profiili = "Low Aspect"
+    wing_info = ""
+
 else: # Wingfoil
     if taso == "Aloittelija":
-        siivet = "• Sabfoil TORTUGA 1250<br>• Duotone Aero Lift 2400"
-        insight = f"Aloittelijana tarvitset kelluttavan laudan ({volyymi}L). Suositeltu siipi: {wing_koko}."
-    else:
-        siivet = "• Sabfoil MEDUSA PRO 869<br>• Sabfoil RAZOR 880"
-        insight = f"Kokeneempana voit käyttää pienempää lautaa. Suositeltu wingi: {wing_koko}."
+        lauta_malli = "Duotone Sky Free"
+        volyymi = int(paino + 40)
+        siivet = "• Sabfoil TORTUGA 1250"
+    elif taso == "Keskitaso":
+        lauta_malli = "Duotone Sky Style"
+        volyymi = int(paino + 5)
+        siivet = "• Sabfoil MEDUSA PRO 869"
+    else: # Pro
+        lauta_malli = "Duotone Sky Surf / Style"
+        volyymi = int(paino - 15)
+        siivet = "• Sabfoil RAZOR 880"
+    
+    masto = 82 if pituus > 180 else 75
     profiili = "Medium Aspect"
+    
+    # Wingin koko painon mukaan
+    if paino < 65: wk = "4.0m"
+    elif paino < 85: wk = "5.0m"
+    else: wk = "6.0m"
+    wing_info = f"<strong>SUOSITELTU WINGI:</strong> Duotone Unit {wk}<br><br>"
+    insight = f"Wingfoilissa laudan ({lauta_malli}) volyymi auttaa kelluttavuudessa ennen nousua."
 
 # --- TULOSTUS ---
-st.subheader("🎯 Suositeltu kokoonpano")
+st.subheader(f"🎯 Suositus: {laji}")
 
 st.markdown(f"""
 <div class="result-box">
-    <strong>ETUSIIPI:</strong><br>{siivet}<br><br>
-    <strong>LAUDAN TILAVUUS:</strong> {volyymi} Litraa<br>
-    <strong>MASTON PITUUS:</strong> {masto} cm<br>
-    {"<strong>SUOSITELTU WINGI:</strong> " + wing_koko + "<br><br>" if wing_koko else ""}
+    <strong>LAUTA:</strong> {lauta_malli}<br>
+    <strong>LAUDAN TILAVUUS:</strong> {volyymi} Litraa<br><br>
+    <strong>ETUSIIVI:</strong><br>{siivet}<br><br>
+    <strong>MASTO:</strong> {masto} cm Carbon<br><br>
+    {wing_info}
     <strong>SIIVEN TYYPPI:</strong> {profiili}
 </div>
 """, unsafe_allow_html=True)
@@ -111,5 +124,5 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-raportti = f"LAPPIS FOIL ADVAISER\nLaji: {laji}\nPaino: {paino}kg\nLauta: {volyymi}L\nMasto: {masto}cm"
-st.download_button("📥 Tallenna suositus", raportti, file_name=f"lappis_foili_{laji}.txt")
+raportti = f"LAPPIS FOIL ADVAISER\nLaji: {laji}\nLauta: {lauta_malli} ({volyymi}L)\nSiivet: {siivet.replace('<br>', ', ')}"
+st.download_button("📥 Tallenna suositus", raportti, file_name=f"lappis_{laji}.txt")
