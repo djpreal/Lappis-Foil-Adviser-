@@ -4,12 +4,19 @@ from groq import Groq
 # --- SIVUN ASETUKSET ---
 st.set_page_config(page_title="Lappis Foil Advaiser Pro", page_icon="🏄‍♂️", layout="wide")
 
-# --- GROQ API ALUSTUS ---
-# Käytetään ensisijaisesti Secretsiä, mutta jos sitä ei ole, käytetään antamaasi avainta
-api_key = st.secrets.get("GROQ_API_KEY", "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")
+# --- TURVALLINEN API-ALUSTUS ---
+# Koodi hakee avaimen Streamlitin "Secrets"-asetuksista.
+# Älä kirjoita avainta tähän tiedostoon!
+api_key = st.secrets.get("GROQ_API_KEY")
+
+if not api_key:
+    st.error("⚠️ API-avain puuttuu. Lisää 'GROQ_API_KEY' Streamlit Cloudin Secrets-asetuksiin.")
+    st.info("Ohje: Mene Streamlit Cloud -> Settings -> Secrets ja lisää: GROQ_API_KEY = 'sinun_avaimesi'")
+    st.stop()
+
 client = Groq(api_key=api_key)
 
-# --- AMMATTIMAINEN TYYLITTELY ---
+# --- TYYLITTELY ---
 st.markdown("""
     <style>
     .stApp { background-color: #0b0f19; }
@@ -23,7 +30,7 @@ st.markdown("""
         border-radius: 12px; padding: 20px; height: 100%; transition: 0.3s;
     }
     .stat-card:hover { border-color: #38bdf8; }
-    .category-label { color: #8b949e; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+    .category-label { color: #8b949e; font-size: 11px; font-weight: 600; text-transform: uppercase; }
     .value-label { color: #ffffff; font-size: 20px; font-weight: 700; margin-top: 5px; }
     .product-list { color: #38bdf8; font-size: 14px; font-weight: 500; margin-top: 10px; }
     </style>
@@ -39,34 +46,27 @@ with st.container():
     with c3: paino = st.number_input("Paino (kg)", 30, 150, 85)
     with c4: pituus = st.number_input("Pituus (cm)", 100, 220, 180)
 
-st.markdown("<br>", unsafe_allow_html=True)
-
-# --- LAAJENNETTU LOGIIKKA ---
-lauta_malli = ""; vol = 0; siivet = ""; masto = ""; extra_label = ""; extra_val = ""; insight = ""
+# --- LASKENTALOGIIKKA ---
+lauta_malli = ""; vol = 0; siivet = ""; masto = ""; extra_label = ""; extra_val = ""
 
 if laji == "Pumpfoil":
-    vol = 35 if taso == "Aloittelija" else 25 if taso == "Keskitaso" else 15
-    lauta_malli = "Duotone Sky Surf / Style"
-    siivet = "Sabfoil Leviathan 1550 / 1350<br>Duotone Aero Glide 1595"
+    vol = 35 if taso == "Aloittelija" else 15
+    lauta_malli = "Duotone Sky Surf"
+    siivet = "Sabfoil Leviathan 1550 / 1350"
     masto = "73cm Kraken Carbon"
-    extra_label = "Lajispesifit"; extra_val = "Pump-optimized"
-    insight = "Pumpfoilissa pieni tilavuus on välttämätön heiluripainon minimoimiseksi."
+    extra_label = "Tyyppi"; extra_val = "Pump-Specialist"
 elif laji == "eFoil":
     vol = int(paino + 25); lauta_malli = "Audi e-tron Foil"; siivet = "Aero Lift 2400"
-    masto = "80cm Integrated"; extra_label = "Sähköjärjestelmä"; extra_val = "5kW / 2.8kWh Akku"
-    insight = "eFoil-järjestelmä antaa 120min ajoaikaa ja on markkinoiden hiljaisin."
+    masto = "80cm Integrated"; extra_label = "Akku"; extra_val = "2.8kWh (120min)"
 elif laji == "SUPfoil":
-    vol = int(paino + 55); lauta_malli = "Duotone Sky Brid"; siivet = "Sabfoil Leviathan 1550"
-    masto = "75-82cm Carbon"; extra_label = "Mela"; extra_val = "Full Carbon Fixed"
-    insight = "SUP-foilaus vaatii suuren tilavuuden seisten tapahtuvaan melontaan."
+    vol = int(paino + 55); lauta_malli = "Duotone Sky Brid"; siivet = "Sabfoil Leviathan 1750"
+    masto = "75-82cm Carbon"; extra_label = "Mela"; extra_val = "Full Carbon"
 else: # Wingfoil
     vol = int(paino + (45 if taso == "Aloittelija" else 5 if taso == "Keskitaso" else -15))
     lauta_malli = "Duotone Sky Free / Style"
-    siivet = "Sabfoil Medusa Pro / Tortuga<br>Duotone Aero Free"
-    masto = "82cm Carbon"
+    siivet = "Sabfoil Medusa Pro / Tortuga"; masto = "82cm Carbon"
     wk = "4.5m" if paino < 70 else "5.5m"
     extra_label = "Wing-koko"; extra_val = f"Duotone Unit {wk}"
-    insight = f"Wingfoilissa suosittelemme {wk} siipeä painoosi nähden."
 
 # --- DASHBOARD ---
 col_a, col_b, col_c, col_d = st.columns(4)
@@ -75,11 +75,11 @@ with col_a:
 with col_b:
     st.markdown(f'<div class="stat-card"><div class="category-label">🦅 Etusiipi</div><div class="value-label">Sabfoil / Duotone</div><div class="product-list">{siivet}</div></div>', unsafe_allow_html=True)
 with col_c:
-    st.markdown(f'<div class="stat-card"><div class="category-label">🪁 {extra_label}</div><div class="value-label">{extra_val}</div><div class="product-list">Suositeltu varuste</div></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="stat-card"><div class="category-label">🪁 {extra_label}</div><div class="value-label">{extra_val}</div><div class="product-list">Suositus</div></div>', unsafe_allow_html=True)
 with col_d:
     st.markdown(f'<div class="stat-card"><div class="category-label">📏 Masto</div><div class="value-label">{masto}</div><div class="product-list">Käyttäjä: {paino}kg</div></div>', unsafe_allow_html=True)
 
-# --- 🤖 LAPPIS AI CHATBOT (GROQ) ---
+# --- 🤖 LAPPIS AI ASSISTANT (GROQ) ---
 st.divider()
 st.subheader("🤖 Lappis AI Assistant")
 
@@ -95,10 +95,14 @@ if prompt := st.chat_input("Kysy foilaamisesta..."):
     with st.chat_message("user"): st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        response_stream = client.chat.completions.create(
-            model="llama3-8b-8192",
-            messages=[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages],
-            stream=True
-        )
-        response = st.write_stream(response_stream)
-    st.session_state.messages.append({"role": "assistant", "content": response})
+        try:
+            chat_messages = [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages]
+            response_stream = client.chat.completions.create(
+                model="llama3-8b-8192",
+                messages=chat_messages,
+                stream=True
+            )
+            response = st.write_stream(response_stream)
+            st.session_state.messages.append({"role": "assistant", "content": response})
+        except Exception as e:
+            st.error(f"Virhe yhteydessä AI-palveluun. Tarkista API-avain asetuksista.")
