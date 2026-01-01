@@ -84,6 +84,7 @@ st.subheader("🤖 Lappis AI Assistant")
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Näytetään vanhat viestit
 for m in st.session_state.messages:
     with st.chat_message(m["role"]):
         st.markdown(m["content"])
@@ -95,22 +96,33 @@ if prompt := st.chat_input("Kysy foilaamisesta..."):
 
     with st.chat_message("assistant"):
         try:
-            # Luodaan puhdas viestilista pyyntöä varten
+            # Luodaan viestit AI:lle
             api_messages = [
-                {"role": "system", "content": f"Olet Lappis-kaupan asiantuntija. Autat asiakasta lajissa {laji}. Suosittele Sabfoil ja Duotone tuotteita. Vastaa suomeksi."}
+                {"role": "system", "content": f"Olet Lappis-kaupan asiantuntija. Autat asiakasta lajissa {laji}. Paino {paino}kg. Suosittele Sabfoil ja Duotone tuotteita. Vastaa ystävällisesti suomeksi."}
             ]
             for m in st.session_state.messages:
                 api_messages.append({"role": m["role"], "content": m["content"]})
 
-            # PÄIVITETTY MALLI TÄSSÄ:
+            # Tehdään kutsu
             response_stream = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=api_messages,
                 stream=True
             )
-            full_response = st.write_stream(response_stream)
+            
+            # Puretaan vastaus pala palalta (estää JSON-koodin näkymisen)
+            full_response = ""
+            placeholder = st.empty()
+            
+            for chunk in response_stream:
+                if chunk.choices[0].delta.content is not None:
+                    text = chunk.choices[0].delta.content
+                    full_response += text
+                    placeholder.markdown(full_response + "▌")
+            
+            placeholder.markdown(full_response)
             st.session_state.messages.append({"role": "assistant", "content": full_response})
             
         except Exception as e:
-            st.error(f"AI-yhteysvirhe: Tarkista asetukset.")
+            st.error(f"AI-yhteysvirhe. Tarkista asetukset.")
             st.caption(f"Tekninen virhe: {str(e)}")
