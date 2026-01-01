@@ -102,8 +102,9 @@ if prompt := st.chat_input("Kysy foilaamisesta..."):
             for m in st.session_state.messages:
                 api_messages.append({"role": m["role"], "content": m["content"]})
 
+            # PÄIVITETTY MALLI TÄSSÄ:
             response_stream = client.chat.completions.create(
-                model="llama3-8b-8192",
+                model="llama-3.3-70b-versatile",
                 messages=api_messages,
                 stream=True
             )
@@ -111,5 +112,5 @@ if prompt := st.chat_input("Kysy foilaamisesta..."):
             st.session_state.messages.append({"role": "assistant", "content": full_response})
             
         except Exception as e:
-            st.error(f"AI-yhteysvirhe: Tarkista API-avain Secrets-asetuksista.")
+            st.error(f"AI-yhteysvirhe: Tarkista asetukset.")
             st.caption(f"Tekninen virhe: {str(e)}")
