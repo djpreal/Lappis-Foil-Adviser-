@@ -5,13 +5,11 @@ from groq import Groq
 st.set_page_config(page_title="Lappis Foil Advaiser Pro", page_icon="🏄‍♂️", layout="wide")
 
 # --- TURVALLINEN API-ALUSTUS ---
-# Koodi hakee avaimen Streamlitin "Secrets"-asetuksista.
-# Älä kirjoita avainta tähän tiedostoon!
 api_key = st.secrets.get("GROQ_API_KEY")
 
 if not api_key:
-    st.error("⚠️ API-avain puuttuu. Lisää 'GROQ_API_KEY' Streamlit Cloudin Secrets-asetuksiin.")
-    st.info("Ohje: Mene Streamlit Cloud -> Settings -> Secrets ja lisää: GROQ_API_KEY = 'sinun_avaimesi'")
+    st.error("⚠️ API-avain puuttuu!")
+    st.info("Lisää 'GROQ_API_KEY' Streamlit Cloudin Secrets-asetuksiin.")
     st.stop()
 
 client = Groq(api_key=api_key)
@@ -84,25 +82,34 @@ st.divider()
 st.subheader("🤖 Lappis AI Assistant")
 
 if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "system", "content": f"Olet Lappis-kaupan asiantuntija. Autat asiakasta lajissa {laji}. Paino {paino}kg. Suosittele Sabfoil ja Duotone tuotteita. Vastaa suomeksi."}]
+    st.session_state.messages = []
 
 for m in st.session_state.messages:
-    if m["role"] != "system":
-        with st.chat_message(m["role"]): st.markdown(m["content"])
+    with st.chat_message(m["role"]):
+        st.markdown(m["content"])
 
 if prompt := st.chat_input("Kysy foilaamisesta..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"): st.markdown(prompt)
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
     with st.chat_message("assistant"):
         try:
-            chat_messages = [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages]
+            # Luodaan puhdas viestilista pyyntöä varten
+            api_messages = [
+                {"role": "system", "content": f"Olet Lappis-kaupan asiantuntija. Autat asiakasta lajissa {laji}. Suosittele Sabfoil ja Duotone tuotteita. Vastaa suomeksi."}
+            ]
+            for m in st.session_state.messages:
+                api_messages.append({"role": m["role"], "content": m["content"]})
+
             response_stream = client.chat.completions.create(
                 model="llama3-8b-8192",
-                messages=chat_messages,
+                messages=api_messages,
                 stream=True
             )
-            response = st.write_stream(response_stream)
-            st.session_state.messages.append({"role": "assistant", "content": response})
+            full_response = st.write_stream(response_stream)
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
+            
         except Exception as e:
-            st.error(f"Virhe yhteydessä AI-palveluun. Tarkista API-avain asetuksista.")
+            st.error(f"AI-yhteysvirhe: Tarkista API-avain Secrets-asetuksista.")
+            st.caption(f"Tekninen virhe: {str(e)}")
