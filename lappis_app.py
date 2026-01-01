@@ -44,71 +44,74 @@ with col2:
 
 st.divider()
 
-# --- TÄYSIN ERIYTETTY LOGIIKKA PUMPFOILILLE ---
+# --- TIETOKANTA JA LOGIIKKA ---
+
+# Alustetaan muuttujat tyhjiksi
+lauta_malli = ""
+siivet = ""
+masto = 0
+volyymi = 0
+wing_info = ""
 
 if laji == "Pumpfoil":
-    # Pumpfoil-lautasuositukset (Sky Surf / Sky Style)
+    # Pakotetaan Pumpfoil-logiikka
+    masto = 73 # Sabfoil Kraken standardi pumpulle
     if taso == "Aloittelija":
-        lauta_malli = "Duotone Sky Style (tai Sky Free)"
+        lauta_malli = "Duotone Sky Style 4'11\" tai Sabfoil Torpedo"
         volyymi = 35
-        masto = 73
-        siivet = "• Sabfoil LEVIATHAN 1550<br>• Duotone Aero Glide 1595"
+        siivet = "• Sabfoil LEVIATHAN 1550 (Suositus)<br>• Duotone Aero Glide 1595 / 1305<br>• Sabfoil SIREN 1350"
     elif taso == "Keskitaso":
-        lauta_malli = "Duotone Sky Surf"
+        lauta_malli = "Duotone Sky Surf 4'2\" tai Sabfoil Torpedo 100"
         volyymi = 25
-        masto = 73
-        siivet = "• Sabfoil LEVIATHAN 1350<br>• Sabfoil SIREN 1350"
+        siivet = "• Sabfoil LEVIATHAN 1350 / 1150<br>• Sabfoil SIREN 1350<br>• Duotone Aero Glide 1085"
     else: # Pro
-        lauta_malli = "Duotone Sky Surf (Carbon)"
+        lauta_malli = "Duotone Sky Surf 3'9\" (Carbon)"
         volyymi = 15
-        masto = 73
-        siivet = "• Sabfoil LEVIATHAN 1150<br>• Sabfoil BLADE 82"
+        siivet = "• Sabfoil LEVIATHAN 950 / 1150<br>• Sabfoil BLADE 82<br>• Duotone Aero Glide 905"
     
-    insight = f"Pumpfoilissa käytetään pieniä lautoja ({volyymi}L). Sky Surf on suunniteltu minimoimaan heiluripaino, jotta pumppaaminen on tehokasta."
-    profiili = "Ultra-High Aspect (Pumppaukseen)"
-    wing_info = "" # Ei wingiä pumppauksessa
+    insight = "Pumpfoilissa laudan on oltava mahdollisimman pieni (15-35L). Sky Surf on täydellinen valinta heiluripainon minimoimiseksi."
+    profiili = "Ultra-High Aspect"
+
+elif laji == "Wingfoil":
+    # Wingfoil-laudat ja -siivet
+    if taso == "Aloittelija":
+        lauta_malli = "Duotone Sky Free tai Sabfoil Medusa 110"
+        volyymi = int(paino + 40)
+        siivet = "• Sabfoil TORTUGA 1250 / 1100<br>• Duotone Aero Lift 2400 / Aero Free 2000"
+        masto = 75
+    elif taso == "Keskitaso":
+        lauta_malli = "Duotone Sky Style tai Sabfoil Medusa 80"
+        volyymi = int(paino + 5)
+        siivet = "• Sabfoil MEDUSA PRO 869 / 969<br>• Duotone Aero Free 1250 / 1000"
+        masto = 82
+    else: # Pro
+        lauta_malli = "Duotone Sky Style SLS tai Sabfoil Torpedo"
+        volyymi = int(paino - 15)
+        siivet = "• Sabfoil RAZOR 880 / 820<br>• Sabfoil MEDUSA PRO 769<br>• Duotone Aero Carve 2.0"
+        masto = 93
+
+    # Wingin koko laskenta
+    wk = "4.0m" if paino < 65 else "5.0m" if paino < 85 else "6.0m"
+    wing_info = f"<strong>SUOSITELTU WINGI:</strong> Duotone Unit / Slick {wk}<br><br>"
+    insight = f"Wingfoilissa laudan ({lauta_malli}) volyymi on kriittinen vakaudelle ennen nousua."
+    profiili = "Medium / High Aspect"
 
 elif laji == "eFoil":
-    lauta_malli = "Audi e-tron Foil (L-koko)" if taso == "Aloittelija" else "Audi e-tron Foil (Performance)"
+    lauta_malli = "Audi e-tron Foil by Aerofoils"
     volyymi = int(paino + 20)
     masto = 80
-    siivet = "• Aero Lift 2400"
-    insight = "eFoilissa moottori hoitaa noston, lauta antaa vakauden startissa."
+    siivet = "• Aero Lift 2400 (Standard)<br>• Aero Glide 1305 (Speed)"
+    insight = "eFoilissa vakaus korostuu startissa. Moottori antaa jatkuvan työnnön."
     profiili = "Low Aspect"
-    wing_info = ""
-
-else: # Wingfoil
-    if taso == "Aloittelija":
-        lauta_malli = "Duotone Sky Free"
-        volyymi = int(paino + 40)
-        siivet = "• Sabfoil TORTUGA 1250"
-    elif taso == "Keskitaso":
-        lauta_malli = "Duotone Sky Style"
-        volyymi = int(paino + 5)
-        siivet = "• Sabfoil MEDUSA PRO 869"
-    else: # Pro
-        lauta_malli = "Duotone Sky Surf / Style"
-        volyymi = int(paino - 15)
-        siivet = "• Sabfoil RAZOR 880"
-    
-    masto = 82 if pituus > 180 else 75
-    profiili = "Medium Aspect"
-    
-    # Wingin koko painon mukaan
-    if paino < 65: wk = "4.0m"
-    elif paino < 85: wk = "5.0m"
-    else: wk = "6.0m"
-    wing_info = f"<strong>SUOSITELTU WINGI:</strong> Duotone Unit {wk}<br><br>"
-    insight = f"Wingfoilissa laudan ({lauta_malli}) volyymi auttaa kelluttavuudessa ennen nousua."
 
 # --- TULOSTUS ---
 st.subheader(f"🎯 Suositus: {laji}")
 
 st.markdown(f"""
 <div class="result-box">
-    <strong>LAUTA:</strong> {lauta_malli}<br>
+    <strong>LAUTAVAIHTOEHDOT:</strong><br>{lauta_malli}<br>
     <strong>LAUDAN TILAVUUS:</strong> {volyymi} Litraa<br><br>
-    <strong>ETUSIIVI:</strong><br>{siivet}<br><br>
+    <strong>ETUSIIVET (Sabfoil & Duotone):</strong><br>{siivet}<br><br>
     <strong>MASTO:</strong> {masto} cm Carbon<br><br>
     {wing_info}
     <strong>SIIVEN TYYPPI:</strong> {profiili}
@@ -120,9 +123,6 @@ st.markdown(f"""
     <strong style="color:#38bdf8;">LAPPIS EXPERT INSIGHT:</strong><br>
     <p style="color:white; margin-top:10px;">{insight}</p>
     <hr style="border:0.1px solid #1e293b;">
-    <em style="color:#94a3b8;">Kuski: {paino}kg | {pituus}cm | {taso}</em>
+    <em style="color:#94a3b8;">Koneisto päivitetty: Sabfoil Kraken & Duotone SLS sarjat huomioitu.</em>
 </div>
 """, unsafe_allow_html=True)
-
-raportti = f"LAPPIS FOIL ADVAISER\nLaji: {laji}\nLauta: {lauta_malli} ({volyymi}L)\nSiivet: {siivet.replace('<br>', ', ')}"
-st.download_button("📥 Tallenna suositus", raportti, file_name=f"lappis_{laji}.txt")
