@@ -9,7 +9,6 @@ api_key = st.secrets.get("GROQ_API_KEY")
 
 if not api_key:
     st.error("⚠️ API-avain puuttuu!")
-    st.info("Lisää 'GROQ_API_KEY' Streamlit Cloudin Secrets-asetuksiin.")
     st.stop()
 
 client = Groq(api_key=api_key)
@@ -44,14 +43,11 @@ with st.container():
     with c3: paino = st.number_input("Paino (kg)", 30, 150, 85)
     with c4: pituus = st.number_input("Pituus (cm)", 100, 220, 180)
 
-# --- LASKENTALOGIIKKA ---
+# --- LASKENTALOGIIKKA (Pysyy samana) ---
 lauta_malli = ""; vol = 0; siivet = ""; masto = ""; extra_label = ""; extra_val = ""
-
 if laji == "Pumpfoil":
     vol = 35 if taso == "Aloittelija" else 15
-    lauta_malli = "Duotone Sky Surf"
-    siivet = "Sabfoil Leviathan 1550 / 1350"
-    masto = "73cm Kraken Carbon"
+    lauta_malli = "Duotone Sky Surf"; siivet = "Sabfoil Leviathan 1550 / 1350"; masto = "73cm Kraken Carbon"
     extra_label = "Tyyppi"; extra_val = "Pump-Specialist"
 elif laji == "eFoil":
     vol = int(paino + 25); lauta_malli = "Audi e-tron Foil"; siivet = "Aero Lift 2400"
@@ -61,21 +57,16 @@ elif laji == "SUPfoil":
     masto = "75-82cm Carbon"; extra_label = "Mela"; extra_val = "Full Carbon"
 else: # Wingfoil
     vol = int(paino + (45 if taso == "Aloittelija" else 5 if taso == "Keskitaso" else -15))
-    lauta_malli = "Duotone Sky Free / Style"
-    siivet = "Sabfoil Medusa Pro / Tortuga"; masto = "82cm Carbon"
+    lauta_malli = "Duotone Sky Free / Style"; siivet = "Sabfoil Medusa Pro / Tortuga"; masto = "82cm Carbon"
     wk = "4.5m" if paino < 70 else "5.5m"
     extra_label = "Wing-koko"; extra_val = f"Duotone Unit {wk}"
 
 # --- DASHBOARD ---
 col_a, col_b, col_c, col_d = st.columns(4)
-with col_a:
-    st.markdown(f'<div class="stat-card"><div class="category-label">🌊 Lauta</div><div class="value-label">{lauta_malli}</div><div class="product-list">Tilavuus: {vol}L</div></div>', unsafe_allow_html=True)
-with col_b:
-    st.markdown(f'<div class="stat-card"><div class="category-label">🦅 Etusiipi</div><div class="value-label">Sabfoil / Duotone</div><div class="product-list">{siivet}</div></div>', unsafe_allow_html=True)
-with col_c:
-    st.markdown(f'<div class="stat-card"><div class="category-label">🪁 {extra_label}</div><div class="value-label">{extra_val}</div><div class="product-list">Suositus</div></div>', unsafe_allow_html=True)
-with col_d:
-    st.markdown(f'<div class="stat-card"><div class="category-label">📏 Masto</div><div class="value-label">{masto}</div><div class="product-list">Käyttäjä: {paino}kg</div></div>', unsafe_allow_html=True)
+with col_a: st.markdown(f'<div class="stat-card"><div class="category-label">🌊 Lauta</div><div class="value-label">{lauta_malli}</div><div class="product-list">Tilavuus: {vol}L</div></div>', unsafe_allow_html=True)
+with col_b: st.markdown(f'<div class="stat-card"><div class="category-label">🦅 Etusiipi</div><div class="value-label">Sabfoil / Duotone</div><div class="product-list">{siivet}</div></div>', unsafe_allow_html=True)
+with col_c: st.markdown(f'<div class="stat-card"><div class="category-label">🪁 {extra_label}</div><div class="value-label">{extra_val}</div><div class="product-list">Suositus</div></div>', unsafe_allow_html=True)
+with col_d: st.markdown(f'<div class="stat-card"><div class="category-label">📏 Masto</div><div class="value-label">{masto}</div><div class="product-list">Käyttäjä: {paino}kg</div></div>', unsafe_allow_html=True)
 
 # --- 🤖 LAPPIS AI ASSISTANT (GROQ) ---
 st.divider()
@@ -84,53 +75,54 @@ st.subheader("🤖 Lappis AI Assistant")
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Näytetään vanhat viestit
 for m in st.session_state.messages:
     with st.chat_message(m["role"]):
         st.markdown(m["content"])
 
 if prompt := st.chat_input("Kysy foilaamisesta..."):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+    # --- TIUKKA GUARDRAIL (ESTOLISTA) ---
+    kielletyt = ["pizza", "resepti", "ruoka", "politiikka", "koodaa", "script", "peli"]
+    if any(sana in prompt.lower() for sana in kielletyt):
+        with st.chat_message("assistant"):
+            st.warning("Olen Lappis-kaupan foilaus-botti. Keskitytään foilaamiseen! 🏄‍♂️")
+    else:
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
 
-    with st.chat_message("assistant"):
-        try:
-            # --- RAJOITETTU SYSTEEMIOHJE ---
-            api_messages = [
-                {
-                    "role": "system", 
-                    "content": (
-                        f"Olet Lappis-kaupan foilaus-asiantuntija. Käyttäjä harrastaa lajia {laji}. "
-                        "VASTAA VAIN foilaamiseen, vesiurheiluun sekä Sabfoil- ja Duotone-tuotteisiin liittyviin kysymyksiin. "
-                        "Jos käyttäjä kysyy jotain, mikä ei liity foilaamiseen (esim. politiikka, ruokaohjeet, koodaus), "
-                        "kieltäydy kohteliaasti vastaamasta ja sano, että osaat auttaa vain foilausasioissa. "
-                        "Puhu suomea, ole ystävällinen ja asiantunteva."
-                    )
-                }
-            ]
-            for m in st.session_state.messages:
-                api_messages.append({"role": m["role"], "content": m["content"]})
+        with st.chat_message("assistant"):
+            try:
+                api_messages = [
+                    {
+                        "role": "system", 
+                        "content": (
+                            "ÄLÄ POIKKEA ROOLISTASI. Olet Lappis-kaupan asiantuntija. "
+                            "VASTAA AINOASTAAN foilaamiseen (Wing, Pump, eFoil, SUP) ja varusteisiin liittyviin kysymyksiin. "
+                            "Jos kysymys on muusta aiheesta (kuten ruoka, pizza, yleistieto), kieltäydy VÄLITTÖMÄSTI. "
+                            "Älä anna ohjeita, reseptejä tai vinkkejä foilaamisen ulkopuolelta. "
+                            "Käytä ammattimaista ja rentoa Lappis-tyyliä suomeksi."
+                        )
+                    }
+                ]
+                for m in st.session_state.messages:
+                    api_messages.append({"role": m["role"], "content": m["content"]})
 
-            # Tehdään kutsu
-            response_stream = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=api_messages,
-                stream=True
-            )
-            
-            # Puretaan vastaus tekstiksi (poistaa JSON-koodit)
-            full_response = ""
-            placeholder = st.empty()
-            
-            for chunk in response_stream:
-                if chunk.choices[0].delta.content is not None:
-                    text = chunk.choices[0].delta.content
-                    full_response += text
-                    placeholder.markdown(full_response + "▌")
-            
-            placeholder.markdown(full_response)
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
-            
-        except Exception as e:
-            st.error("Yhteysvirhe. Botti on hetken veden alla. Kokeile hetken päästä uudelleen.")
+                response_stream = client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    messages=api_messages,
+                    temperature=0.0, # LASKETTU NOLLAAN: Tekee botista vähemmän "luovan" ja tiukemman
+                    stream=True
+                )
+                
+                full_response = ""
+                placeholder = st.empty()
+                for chunk in response_stream:
+                    if chunk.choices[0].delta.content is not None:
+                        full_response += chunk.choices[0].delta.content
+                        placeholder.markdown(full_response + "▌")
+                
+                placeholder.markdown(full_response)
+                st.session_state.messages.append({"role": "assistant", "content": full_response})
+                
+            except Exception as e:
+                st.error("Yhteysvirhe. Yritä hetken päästä uudelleen.")
