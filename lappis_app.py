@@ -1,51 +1,44 @@
 import streamlit as st
 
-# Sivun asetukset - Moderni tumma teema
+# Sivun asetukset
 st.set_page_config(page_title="Lappis Foil Advaiser Pro", page_icon="🏄‍♂️", layout="wide")
 
-# --- AMMATTIMAINEN TYYLITTELY (CSS) ---
+# --- AMMATTIMAINEN TYYLITTELY ---
 st.markdown("""
     <style>
     .stApp { background-color: #0b0f19; }
-    
-    /* Pääotsikko */
     .main-header { 
         background: linear-gradient(90deg, #38bdf8, #818cf8);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         font-size: 52px; font-weight: 800; text-align: center; margin-bottom: 0px;
     }
-    
-    /* Kortit */
     .stat-card {
         background-color: #161b22;
         border: 1px solid #30363d;
         border-radius: 12px;
         padding: 20px;
-        transition: transform 0.3s;
+        height: 100%;
+        transition: transform 0.2s;
     }
-    .stat-card:hover { border-color: #58a6ff; transform: translateY(-5px); }
-    
-    .category-label { color: #8b949e; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-    .value-label { color: #ffffff; font-size: 20px; font-weight: 700; margin-top: 5px; }
-    .product-list { color: #38bdf8; font-size: 16px; font-weight: 500; margin-top: 10px; line-height: 1.4; }
-
-    /* Expert Insight Box */
+    .stat-card:hover { border-color: #58a6ff; }
+    .category-label { color: #8b949e; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; }
+    .value-label { color: #ffffff; font-size: 19px; font-weight: 700; margin-top: 5px; margin-bottom: 10px; }
+    .product-list { color: #38bdf8; font-size: 14px; font-weight: 500; line-height: 1.4; }
     .insight-box {
-        background: rgba(56, 189, 248, 0.1);
+        background: rgba(56, 189, 248, 0.05);
         border-radius: 12px;
-        padding: 25px;
-        border-left: 6px solid #38bdf8;
-        margin-top: 30px;
+        padding: 20px;
+        border: 1px dashed #38bdf8;
+        margin-top: 25px;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- YLÄOSA ---
 st.markdown('<div class="main-header">Lappis Foil Advaiser</div>', unsafe_allow_html=True)
-st.write("<p style='text-align: center; color: #8b949e;'>Premium Gear Configurator v4.0</p>", unsafe_allow_html=True)
+st.write("<p style='text-align: center; color: #8b949e; margin-bottom: 30px;'>Asiantuntijan konfiguraattori</p>", unsafe_allow_html=True)
 
-# --- SYÖTTEET (Sivupalkissa tai ylhäällä) ---
+# --- SYÖTTEET ---
 with st.container():
     c1, c2, c3, c4 = st.columns(4)
     with c1: laji = st.selectbox("Laji", ["Wingfoil", "Pumpfoil", "eFoil", "SUPfoil"])
@@ -55,52 +48,80 @@ with st.container():
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# --- LOGIIKKA (Sama korjattu logiikka) ---
+# --- LOGIIKKA ---
+# Alustus
+lauta_malli = ""; vol = 0; siivet = ""; masto = ""; wing_koko = ""; wing_malli = ""; insight = ""
+
 if laji == "Pumpfoil":
-    vol = 30 if taso == "Aloittelija" else 20 if taso == "Keskitaso" else 15
-    lauta = "Duotone Sky Surf" if taso != "Aloittelija" else "Duotone Sky Style"
-    siivet = "Sabfoil Leviathan 1550 / 1350<br>Duotone Aero Glide 1595"
+    vol = 35 if taso == "Aloittelija" else 25 if taso == "Keskitaso" else 15
+    lauta_malli = "Duotone Sky Surf" if taso != "Aloittelija" else "Duotone Sky Style"
+    siivet = "• Sabfoil Leviathan 1550/1350<br>• Duotone Aero Glide 1595"
     masto = "73cm Kraken Carbon"
-    profiili = "Ultra-High Aspect"
     wing_koko = "N/A"
-else:
-    vol = int(paino + (40 if taso == "Aloittelija" else 5))
-    lauta = "Duotone Sky Free" if taso == "Aloittelija" else "Duotone Sky Style SLS"
-    siivet = "Sabfoil Medusa Pro / Razor<br>Duotone Aero Free / Carve"
-    masto = "82cm Carbon" if pituus > 180 else "75cm Carbon"
-    profiili = "High / Medium Aspect"
-    wing_koko = "5.0m" if paino < 85 else "6.0m"
+    wing_malli = "Ei käytössä"
+    insight = "Pumpfoilissa painotus on mahdollisimman pienessä laudassa ja suuressa High Aspect -etusiivessä."
 
-# --- TULOSTUS (Dashboard-näkymä) ---
-col_a, col_b, col_c = st.columns(3)
+elif laji == "Wingfoil":
+    # Lauta
+    if taso == "Aloittelija":
+        lauta_malli = "Duotone Sky Free / Sabfoil Medusa"
+        vol = int(paino + 40)
+        siivet = "• Sabfoil Tortuga 1250<br>• Duotone Aero Lift 2400"
+    else:
+        lauta_malli = "Duotone Sky Style SLS"
+        vol = int(paino + 5) if taso == "Keskitaso" else int(paino - 15)
+        siivet = "• Sabfoil Medusa Pro 869<br>• Duotone Aero Carve 2.0"
+    
+    # Masto
+    masto = "82cm Carbon" if pituus > 180 or taso != "Aloittelija" else "75cm Aluminum/Carbon"
+    
+    # Wing-purje
+    wing_malli = "Duotone Unit / Slick"
+    if paino < 65: wing_koko = "4.0m"
+    elif paino < 85: wing_koko = "5.0m"
+    else: wing_koko = "6.0m"
+    
+    insight = f"Wingfoilissa {paino}kg kuskille {wing_koko} siipi on optimaalinen yleiskoko Suomen olosuhteisiin."
 
-with col_a:
+# --- NELJÄN KORTIN DASHBOARD ---
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
     st.markdown(f"""<div class="stat-card">
-        <div class="category-label">🌊 Lautasuositus</div>
-        <div class="value-label">{lauta}</div>
+        <div class="category-label">🌊 Lauta</div>
+        <div class="value-label">{lauta_malli}</div>
         <div class="product-list">Tilavuus: {vol}L</div>
     </div>""", unsafe_allow_html=True)
 
-with col_b:
+with col2:
     st.markdown(f"""<div class="stat-card">
-        <div class="category-label">🦅 Foil-setti</div>
-        <div class="value-label">{profiili}</div>
+        <div class="category-label">🦅 Foili (Etusiipi)</div>
+        <div class="value-label">Sabfoil / Duotone</div>
         <div class="product-list">{siivet}</div>
     </div>""", unsafe_allow_html=True)
 
-with col_c:
+with col3:
     st.markdown(f"""<div class="stat-card">
-        <div class="category-label">📏 Tekniset tiedot</div>
-        <div class="value-label">Masto: {masto}</div>
-        <div class="product-list">Wing-koko: {wing_koko}</div>
+        <div class="category-label">🪁 Wing-siipi (Purje)</div>
+        <div class="value-label">{wing_koko}</div>
+        <div class="product-list">{wing_malli}</div>
     </div>""", unsafe_allow_html=True)
 
-# --- EXPERT INSIGHT ---
+with col4:
+    st.markdown(f"""<div class="stat-card">
+        <div class="category-label">📏 Tekniikka</div>
+        <div class="value-label">Masto & Riki</div>
+        <div class="product-list">Pituus: {masto}<br>Painoarvio: {paino}kg</div>
+    </div>""", unsafe_allow_html=True)
+
+# --- ALAOIKEIN INSIGHT ---
 st.markdown(f"""
 <div class="insight-box">
-    <h3 style="margin-top:0; color:#38bdf8;">Lappis Expert Insight</h3>
-    <p style="font-size:16px;">Paino-pituussuhteesi perusteella ({paino}kg / {pituus}cm) suosittelemme painottamaan 
-    <b>{profiili}</b> profiilia, joka tarjoaa optimaalisen nosteen ja hallinnan tässä taitotasossa. 
-    Lauta <b>{lauta}</b> antaa tarvittavan vakauden startteihin.</p>
+    <h4 style="margin-top:0; color:#38bdf8; font-size:16px;">Lappis Expert Insight</h4>
+    <p style="color:white; font-size:14px; margin-bottom:0;">{insight} Suosittelemme tarkistamaan saatavuuden myymälästä tälle kokoonpanolle.</p>
 </div>
 """, unsafe_allow_html=True)
+
+# Latausnappi
+raportti = f"LAPPIS FOIL ADVAISER\nLaji: {laji}\nLauta: {lauta_malli} ({vol}L)\nFoili: {siivet.replace('<br>', ' ')}\nWing: {wing_malli} {wing_koko}\nMasto: {masto}"
+st.download_button("📥 Lataa kokoonpano (.txt)", raportti, file_name=f"lappis_config_{laji}.txt")
