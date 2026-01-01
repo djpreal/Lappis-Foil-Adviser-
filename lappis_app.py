@@ -96,9 +96,18 @@ if prompt := st.chat_input("Kysy foilaamisesta..."):
 
     with st.chat_message("assistant"):
         try:
-            # Luodaan viestit AI:lle
+            # --- RAJOITETTU SYSTEEMIOHJE ---
             api_messages = [
-                {"role": "system", "content": f"Olet Lappis-kaupan asiantuntija. Autat asiakasta lajissa {laji}. Paino {paino}kg. Suosittele Sabfoil ja Duotone tuotteita. Vastaa ystävällisesti suomeksi."}
+                {
+                    "role": "system", 
+                    "content": (
+                        f"Olet Lappis-kaupan foilaus-asiantuntija. Käyttäjä harrastaa lajia {laji}. "
+                        "VASTAA VAIN foilaamiseen, vesiurheiluun sekä Sabfoil- ja Duotone-tuotteisiin liittyviin kysymyksiin. "
+                        "Jos käyttäjä kysyy jotain, mikä ei liity foilaamiseen (esim. politiikka, ruokaohjeet, koodaus), "
+                        "kieltäydy kohteliaasti vastaamasta ja sano, että osaat auttaa vain foilausasioissa. "
+                        "Puhu suomea, ole ystävällinen ja asiantunteva."
+                    )
+                }
             ]
             for m in st.session_state.messages:
                 api_messages.append({"role": m["role"], "content": m["content"]})
@@ -110,7 +119,7 @@ if prompt := st.chat_input("Kysy foilaamisesta..."):
                 stream=True
             )
             
-            # Puretaan vastaus pala palalta (estää JSON-koodin näkymisen)
+            # Puretaan vastaus tekstiksi (poistaa JSON-koodit)
             full_response = ""
             placeholder = st.empty()
             
@@ -124,5 +133,4 @@ if prompt := st.chat_input("Kysy foilaamisesta..."):
             st.session_state.messages.append({"role": "assistant", "content": full_response})
             
         except Exception as e:
-            st.error(f"AI-yhteysvirhe. Tarkista asetukset.")
-            st.caption(f"Tekninen virhe: {str(e)}")
+            st.error("Yhteysvirhe. Botti on hetken veden alla. Kokeile hetken päästä uudelleen.")
